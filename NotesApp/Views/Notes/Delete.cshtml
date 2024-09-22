@@ -1,0 +1,15 @@
+﻿@model NotesApp.Models.Note
+
+<h2>Удалить заметку</h2>
+
+<h3>Вы уверены, что хотите удалить эту заметку?</h3>
+<div>
+    <h4>@Model.Title</h4>
+    <p>@Model.Content</p>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+</form>

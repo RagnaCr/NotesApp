@@ -1,0 +1,27 @@
+﻿@model NotesApp.Models.RegisterViewModel
+
+<div class="container d-flex align-items-center justify-content-center mt-5 py-5">
+    <div class="card shadow" style="max-width: 400px; width: 100%;">
+        <div class="card-body">
+            <h2 class="card-title text-center">Регистрация</h2>
+            <form asp-action="Register">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <div class="form-group">
+                    <label asp-for="Email" class="control-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="Password" class="control-label"></label>
+                    <input asp-for="Password" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword" class="control-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" />
+                </div>
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-primary btn-block mt-3 w-75">Зарегистрироваться</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
