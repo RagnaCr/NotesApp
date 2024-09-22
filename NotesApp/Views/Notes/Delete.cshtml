@@ -4,8 +4,8 @@
 
 <h3>Вы уверены, что хотите удалить эту заметку?</h3>
 <div>
-    <h4>@Model.Title</h4>
-    <p>@Model.Content</p>
+    <h4>Название: "@Model.Title"</h4>
+    <p><h6>Содержание:</h6> "@(Model.Content.Length > 200 ? Model.Content.Substring(0, 200) + "..." : Model.Content)"</p>
 </div>
 
 <form asp-action="Delete" method="post">

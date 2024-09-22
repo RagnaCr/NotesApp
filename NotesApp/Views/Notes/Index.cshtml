@@ -4,11 +4,18 @@
 
 <p>
     <a asp-action="Create" class="btn btn-primary">Создать новую заметку</a>
+
+    <form id="deleteForm" asp-action="DeleteSelected" method="post" style="display: none;">
+        <button type="submit" class="btn btn-danger">Удалить выбранные</button>
+    </form>
 </p>
 
 <table class="table">
     <thead>
         <tr>
+            <th>
+                <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" />
+            </th>
             <th>Заголовок</th>
             <th>Содержание</th>
             <th>Создано</th>
@@ -20,8 +27,11 @@
         @foreach (var note in Model)
         {
             <tr>
-                <td>@note.Title</td>
-                <td>@note.Content</td>
+                <td>
+                    <input type="checkbox" name="selectedNotes" value="@note.Id" onchange="toggleDeleteButton()" />
+                </td>
+                <td>@(note.Title.Length > 30 ? note.Title.Substring(0, 30) + "..." : note.Title)</td>
+                <td>@(note.Content.Length > 55 ? note.Content.Substring(0, 55) + "..." : note.Content)</td>
                 <td>@note.CreatedAt</td>
                 <td>@note.UpdatedAt</td>
                 <td>
@@ -32,3 +42,28 @@
         }
     </tbody>
 </table>
+
+<script>
+    function toggleSelectAll(selectAllCheckbox) {
+        const checkboxes = document.querySelectorAll('input[name="selectedNotes"]');
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        toggleDeleteButton();
+    }
+
+    function toggleDeleteButton() {
+        const checkboxes = document.querySelectorAll('input[name="selectedNotes"]');
+        const deleteButton = document.getElementById('deleteForm');
+        const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        deleteButton.style.display = anyChecked ? 'block' : 'none';
+    }
+</script>
+
+<form asp-controller="Zip" asp-action="ExportNotes" method="post">
+    <button type="submit" class="btn btn-success">Экспортировать заметки</button>
+</form>
+<form asp-controller="Zip" asp-action="ImportNotes" id="importForm" method="post" enctype="multipart/form-data">
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('fileUpload').click();">Импортировать заметки</button>
+    <input type="file" id="fileUpload" name="file" style="display: none;" accept=".zip,.md" onchange="this.form.submit();" />
+</form>

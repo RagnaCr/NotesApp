@@ -137,6 +137,28 @@ namespace NotesApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        public async Task<IActionResult> DeleteSelected(string[] selectedNotes)
+        {
+            if (selectedNotes == null || selectedNotes.Length == 0)
+            {
+                return Content("Выберите хотя бы одну заметку для удаления.");
+            }
+
+            foreach (var noteId in selectedNotes)
+            {
+                var note = await _context.Notes.FindAsync(noteId);
+                if (note != null)
+                {
+                    _context.Notes.Remove(note);
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
+
+
         private bool NoteExists(int id)
         {
             return _context.Notes.Any(e => e.Id == id);
