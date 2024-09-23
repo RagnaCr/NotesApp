@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Markdig;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NotesApp.Data;
@@ -132,30 +133,53 @@ namespace NotesApp.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var note = await _context.Notes.FindAsync(id);
-            _context.Notes.Remove(note);
+            _ = _context.Notes.Remove(note!);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteSelected(string[] selectedNotes)
+        public async Task<IActionResult> DeleteSelected(int[] selectedNotes)
         {
             if (selectedNotes == null || selectedNotes.Length == 0)
             {
                 return Content("Выберите хотя бы одну заметку для удаления.");
             }
 
-            foreach (var noteId in selectedNotes)
+            var notesToDelete = await _context.Notes
+                .Where(n => selectedNotes.Contains(n.Id))
+                .ToListAsync();
+
+            if (notesToDelete.Count == 0)
             {
-                var note = await _context.Notes.FindAsync(noteId);
-                if (note != null)
-                {
-                    _context.Notes.Remove(note);
-                }
+                return Content("Заметки для удаления не найдены.");
             }
+
+            _context.Notes.RemoveRange(notesToDelete);
             await _context.SaveChangesAsync();
 
             return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var note = await _context.Notes.FindAsync(id);
+            if (note == null)
+            {
+                return NotFound();
+            }
+
+            var markdown = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            var contentHtml = Markdown.ToHtml(note.Content, markdown);
+
+            return View(new NoteDetailsViewModel
+            {
+                Title = note.Title,
+                ContentHtml = contentHtml,
+                CreatedAt = note.CreatedAt,
+                UpdatedAt = note.UpdatedAt
+            });
         }
 
 

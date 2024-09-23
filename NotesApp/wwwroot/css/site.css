@@ -20,3 +20,7 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.link-hover:hover {
+    color: #007bff !important;
+}

@@ -2,46 +2,59 @@
 
 <h2>Заметки</h2>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Создать новую заметку</a>
+<form asp-action="DeleteSelected" method="post">
+    <div class="d-flex justify-content-between mb-3">
+        <a asp-action="Create" class="btn btn-primary">Создать новую заметку</a>
+        <button id="deleteBut" type="submit" class="btn btn-danger" style="display: none;">Удалить выбранные</button>
+    </div>
 
-    <form id="deleteForm" asp-action="DeleteSelected" method="post" style="display: none;">
-        <button type="submit" class="btn btn-danger">Удалить выбранные</button>
-    </form>
-</p>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" />
-            </th>
-            <th>Заголовок</th>
-            <th>Содержание</th>
-            <th>Создано</th>
-            <th>Обновлено</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var note in Model)
-        {
+    <table class="table">
+        <thead>
             <tr>
-                <td>
-                    <input type="checkbox" name="selectedNotes" value="@note.Id" onchange="toggleDeleteButton()" />
-                </td>
-                <td>@(note.Title.Length > 30 ? note.Title.Substring(0, 30) + "..." : note.Title)</td>
-                <td>@(note.Content.Length > 55 ? note.Content.Substring(0, 55) + "..." : note.Content)</td>
-                <td>@note.CreatedAt</td>
-                <td>@note.UpdatedAt</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@note.Id" class="btn btn-warning">Изменить</a>
-                    <a asp-action="Delete" asp-route-id="@note.Id" class="btn btn-danger">Удалить</a>
-                </td>
+                <th>
+                    <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" />
+                </th>
+                <th>Заголовок</th>
+                <th>Содержание</th>
+                <th>Создано</th>
+                <th>Обновлено</th>
+                <th></th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var note in Model)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" name="selectedNotes" value="@note.Id" onchange="toggleDeleteButton()" />
+                    </td>
+                    <td>
+                        <a asp-controller="Notes" asp-action="Details" asp-route-id="@note.Id" class="text-dark text-decoration-none link-hover">
+                            @(note.Title.Length > 30 ? note.Title.Substring(0, 30) + "..." : note.Title)
+                        </a>
+                    </td>
+                    <td>@(note.Content.Length > 55 ? note.Content.Substring(0, 55) + "..." : note.Content)</td>
+                    <td>@note.CreatedAt</td>
+                    <td>@note.UpdatedAt</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@note.Id" class="btn btn-warning">Изменить</a>
+                        <a asp-action="Delete" asp-route-id="@note.Id" class="btn btn-danger">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</form>
+
+<div class="d-flex justify-content-between mb-3">
+    <form asp-controller="Zip" asp-action="ExportNotes" method="post">
+        <button type="submit" class="btn btn-success mb-3">Экспортировать заметки</button>
+    </form>
+    <form asp-controller="Zip" asp-action="ImportNotes" id="importForm" method="post" enctype="multipart/form-data">
+        <button type="button" class="btn btn-info" onclick="document.getElementById('fileUpload').click();">Импортировать заметки</button>
+        <input type="file" id="fileUpload" name="file" style="display: none;" accept=".zip,.md" onchange="this.form.submit();" />
+    </form>
+</div>
 
 <script>
     function toggleSelectAll(selectAllCheckbox) {
@@ -54,16 +67,10 @@
 
     function toggleDeleteButton() {
         const checkboxes = document.querySelectorAll('input[name="selectedNotes"]');
-        const deleteButton = document.getElementById('deleteForm');
+        const deleteButton = document.getElementById('deleteBut');
         const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-        deleteButton.style.display = anyChecked ? 'block' : 'none';
+        deleteButton.style.display = anyChecked ? 'inline' : 'none';
     }
 </script>
 
-<form asp-controller="Zip" asp-action="ExportNotes" method="post">
-    <button type="submit" class="btn btn-success">Экспортировать заметки</button>
-</form>
-<form asp-controller="Zip" asp-action="ImportNotes" id="importForm" method="post" enctype="multipart/form-data">
-    <button type="button" class="btn btn-primary" onclick="document.getElementById('fileUpload').click();">Импортировать заметки</button>
-    <input type="file" id="fileUpload" name="file" style="display: none;" accept=".zip,.md" onchange="this.form.submit();" />
-</form>
+

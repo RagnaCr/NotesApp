@@ -31,6 +31,7 @@ namespace NotesApp.Controllers
                 var notes = await _context.Notes
                     .Where(n => n.UserId == userId)
                     .ToListAsync();
+
                 if (notes.Count == 0) { return Content("Нет заметок для экспорта."); }
 
                 using var memoryStream = new MemoryStream();
@@ -86,41 +87,70 @@ namespace NotesApp.Controllers
 
             try
             {
-                using (var stream = new MemoryStream())
+                var fileExtension = Path.GetExtension(file.FileName).ToLower();
+
+                if (fileExtension == ".md")
                 {
-                    await file.CopyToAsync(stream);
-                    stream.Position = 0;
-
-                    using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+                    using (var reader = new StreamReader(file.OpenReadStream()))
                     {
-                        foreach (var entry in archive.Entries)
+                        var content = await reader.ReadToEndAsync();
+                        var title = Path.GetFileNameWithoutExtension(file.FileName);
+
+                        title = Regex.Replace(title, @"[<>:""/\\|?*]", "");
+
+                        var note = new Note
                         {
-                            if (entry.Name.EndsWith(".md"))
-                            {
-                                using (var reader = new StreamReader(entry.Open()))
-                                {
-                                    var content = await reader.ReadToEndAsync();
-                                    var title = Path.GetFileNameWithoutExtension(entry.Name);
+                            Title = title,
+                            Content = content,
+                            UserId = userId,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
 
-                                    // Удаляем недопустимые символы из заголовка
-                                    title = Regex.Replace(title, @"[<>:""/\\|?*]", "");
-
-                                    // Создаем новую заметку
-                                    var note = new Note
-                                    {
-                                        Title = title,
-                                        Content = content,
-                                        UserId = userId,
-                                        CreatedAt = DateTime.UtcNow,
-                                        UpdatedAt = DateTime.UtcNow
-                                    };
-
-                                    _context.Notes.Add(note);
-                                }
-                            }
-                        }
+                        _context.Notes.Add(note);
                         await _context.SaveChangesAsync();
                     }
+                }
+                else if (fileExtension == ".zip")
+                {
+                    using (var stream = new MemoryStream())
+                    {
+                        await file.CopyToAsync(stream);
+                        stream.Position = 0;
+
+                        using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+                        {
+                            foreach (var entry in archive.Entries)
+                            {
+                                if (entry.Name.EndsWith(".md"))
+                                {
+                                    using (var reader = new StreamReader(entry.Open()))
+                                    {
+                                        var content = await reader.ReadToEndAsync();
+                                        var title = Path.GetFileNameWithoutExtension(entry.Name);
+
+                                        title = Regex.Replace(title, @"[<>:""/\\|?*]", "");
+
+                                        var note = new Note
+                                        {
+                                            Title = title,
+                                            Content = content,
+                                            UserId = userId,
+                                            CreatedAt = DateTime.UtcNow,
+                                            UpdatedAt = DateTime.UtcNow
+                                        };
+
+                                        _context.Notes.Add(note);
+                                    }
+                                }
+                            }
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
+                else
+                {
+                    return Content("Недопустимый формат файла. Пожалуйста, загрузите .md или .zip файл.");
                 }
 
                 return RedirectToAction("Index", "Notes");
@@ -130,7 +160,6 @@ namespace NotesApp.Controllers
                 return Content($"Ошибка при импорте заметок: {ex.Message}");
             }
         }
-
 
     }
 }

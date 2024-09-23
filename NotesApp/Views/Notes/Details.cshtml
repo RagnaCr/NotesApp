@@ -1,0 +1,11 @@
+﻿@model NotesApp.Models.NoteDetailsViewModel
+
+<h2>@Model.Title</h2>
+<p><strong>Создано:</strong> @Model.CreatedAt</p>
+<p><strong>Обновлено:</strong> @Model.UpdatedAt</p>
+
+<hr/>
+
+<div>
+    @Html.Raw(Model.ContentHtml)
+</div>
