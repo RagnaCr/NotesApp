@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NotesApp.Data;
 using NotesApp.Models;
+using NotesApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,10 +25,13 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Lockout.AllowedForNewUsers = true; // Разрешить блокировку для новых пользователей
     options.Lockout.MaxFailedAccessAttempts = 5; // Максимальное количество неудачных попыток входа
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5); // Время блокировки
-    options.SignIn.RequireConfirmedAccount = false; // Требовать подтверждение аккаунта
+    options.SignIn.RequireConfirmedAccount = true; // Требовать подтверждение аккаунта
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 
