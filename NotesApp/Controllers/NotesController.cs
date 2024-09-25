@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NotesApp.Data;
 using NotesApp.Models;
+using NotesApp.Services.Interfaces;
 using System.Security.Claims;
 
 namespace NotesApp.Controllers
@@ -11,181 +12,158 @@ namespace NotesApp.Controllers
     [Authorize]
     public class NotesController : BaseController
     {
-        private readonly ApplicationDbContext _context;
+        private readonly INotesService _notesService;
 
-        public NotesController(ApplicationDbContext context)
+        public NotesController(INotesService notesService)
         {
-            _context = context;
+            _notesService = notesService;
         }
 
-        // GET: Notes
         public async Task<IActionResult> Index()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var notes = await _context.Notes.Where(n => n.UserId == userId).ToListAsync();
+            var notes = await _notesService.GetUserNotesAsync(userId);
             return View(notes);
         }
 
-        // GET: Notes/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+        public IActionResult Create() => View();
 
-        // POST: Notes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Note note)
         {
             if (ModelState.IsValid)
             {
-                note.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                note.CreatedAt = DateTime.Now;
-                note.UpdatedAt = DateTime.Now;
-
-                _context.Add(note);
-                await _context.SaveChangesAsync();
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _notesService.CreateNoteAsync(note, userId);
                 return RedirectToAction(nameof(Index));
             }
             return View(note);
         }
 
-        // GET: Notes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var note = await _context.Notes.FindAsync(id);
-            if (note == null || note.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
-            {
-                return NotFound();
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var note = await _notesService.GetNoteByIdAsync(id.Value, userId);
+            if (note == null) return NotFound();
+
             return View(note);
         }
 
-        // POST: Notes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Note note)
         {
-            if (id != note.Id)
-            {
-                return NotFound();
-            }
+            if (id != note.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    var existingNote = await _context.Notes.FindAsync(id);
-                    if (existingNote == null)
-                    {
-                        return NotFound();
-                    }
-
-                    note.UserId = existingNote.UserId;
-                    note.CreatedAt = existingNote.CreatedAt;
-                    note.UpdatedAt = DateTime.Now;
-
-                    _context.Entry(existingNote).CurrentValues.SetValues(note);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!NoteExists(note.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                note.UserId = userId;
+                await _notesService.UpdateNoteAsync(note);
                 return RedirectToAction(nameof(Index));
             }
             return View(note);
         }
 
-        // GET: Notes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var note = await _context.Notes
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (note == null || note.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
-            {
-                return NotFound();
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var note = await _notesService.GetNoteByIdAsync(id.Value, userId);
+            if (note == null) return NotFound();
 
             return View(note);
         }
 
-        // POST: Notes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var note = await _context.Notes.FindAsync(id);
-            _ = _context.Notes.Remove(note!);
-            await _context.SaveChangesAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _notesService.DeleteNoteAsync(id, userId);
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
         public async Task<IActionResult> DeleteSelected(int[] selectedNotes)
         {
-            if (selectedNotes == null || selectedNotes.Length == 0)
-            {
-                return Content("Выберите хотя бы одну заметку для удаления.");
-            }
-
-            var notesToDelete = await _context.Notes
-                .Where(n => selectedNotes.Contains(n.Id))
-                .ToListAsync();
-
-            if (notesToDelete.Count == 0)
-            {
-                return Content("Заметки для удаления не найдены.");
-            }
-
-            _context.Notes.RemoveRange(notesToDelete);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction("Index");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _notesService.DeleteSelectedNotesAsync(selectedNotes, userId);
+            return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var note = await _context.Notes.FindAsync(id);
-            if (note == null)
+            var noteDetails = await _notesService.GetNoteDetailsAsync(id);
+            if (noteDetails == null) return NotFound();
+            return View(noteDetails);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportNotes(IFormFile file)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _notesService.ImportNotesAsync(file, userId);
+
+            if (result.Contains("Ошибка"))
             {
-                return NotFound();
+                return Content(result);
             }
 
-            var markdown = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
-            var contentHtml = Markdown.ToHtml(note.Content, markdown);
+            return RedirectToAction("Index", "Notes");
+        }
 
-            return View(new NoteDetailsViewModel
+        public async Task<IActionResult> ExportNotes(int[] selectedNotes)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
             {
-                Title = note.Title,
-                ContentHtml = contentHtml,
-                CreatedAt = note.CreatedAt,
-                UpdatedAt = note.UpdatedAt
-            });
+                var fileResult = await _notesService.ExportNotesAsync(selectedNotes, userId);
+                return fileResult;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Content(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Content(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Content($"Произошла ошибка: {ex.Message}");
+            }
         }
 
 
-        private bool NoteExists(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MasterAction(IFormFile file, string action, int[] selectedNotes)
         {
-            return _context.Notes.Any(e => e.Id == id);
+            switch (action)
+            {
+                case "DeleteSelected":
+                    if (selectedNotes != null && selectedNotes.Length > 0)
+                    {
+                        return await DeleteSelected(selectedNotes);
+                    }
+                    break;
+                case "ExportNotes":
+                        return await ExportNotes(selectedNotes);
+                default:
+                    if (file != null && file.Length > 0)
+                    {
+                        await ImportNotes(file);
+                    }
+                    return RedirectToAction("Index");
+            }
+
+            return RedirectToAction("Index");
         }
     }
 }

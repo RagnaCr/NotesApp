@@ -22,7 +22,7 @@ namespace NotesApp.Services
                 Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password),
                 EnableSsl = _emailSettings.EnableSSL,
             };
-            await client.SendMailAsync("admin@notesapp.com", email, subject, htmlMessage);
+            await client.SendMailAsync(_emailSettings.AdminEmail, email, subject, htmlMessage);
         }
     }
 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using NotesApp.Data;
 using NotesApp.Models;
 using NotesApp.Services;
+using NotesApp.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<INotesService, NotesService>();
 
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();

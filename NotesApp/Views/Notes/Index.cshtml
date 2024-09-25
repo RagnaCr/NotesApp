@@ -2,10 +2,10 @@
 
 <h2>Заметки</h2>
 
-<form asp-action="DeleteSelected" method="post">
+<form asp-action="MasterAction" method="post" enctype="multipart/form-data">
     <div class="d-flex justify-content-between mb-3">
         <a asp-action="Create" class="btn btn-primary">Создать новую заметку</a>
-        <button id="deleteBut" type="submit" class="btn btn-danger" style="display: none;">Удалить выбранные</button>
+        <button name="action" value="DeleteSelected" id="deleteBut" type="submit" class="btn btn-danger" style="display: none;">Удалить выбранные</button>
     </div>
 
     <table class="table">
@@ -44,17 +44,14 @@
             }
         </tbody>
     </table>
+    <div class="d-flex justify-content-between mb-3">
+        <button name="action" value="ExportNotes" type="submit" class="btn btn-success mb-3">Экспортировать заметки</button>
+        <button type="button" class="btn btn-info mb-3" onclick="document.getElementById('fileUpload').click();">Импортировать заметки</button>
+        <input type="file" id="fileUpload" name="file" style="display: none;" accept=".zip,.md" onchange="this.form.submit();" />
+    </div>
 </form>
 
-<div class="d-flex justify-content-between mb-3">
-    <form asp-controller="Zip" asp-action="ExportNotes" method="post">
-        <button type="submit" class="btn btn-success mb-3">Экспортировать заметки</button>
-    </form>
-    <form asp-controller="Zip" asp-action="ImportNotes" id="importForm" method="post" enctype="multipart/form-data">
-        <button type="button" class="btn btn-info" onclick="document.getElementById('fileUpload').click();">Импортировать заметки</button>
-        <input type="file" id="fileUpload" name="file" style="display: none;" accept=".zip,.md" onchange="this.form.submit();" />
-    </form>
-</div>
+
 
 <script>
     function toggleSelectAll(selectAllCheckbox) {
