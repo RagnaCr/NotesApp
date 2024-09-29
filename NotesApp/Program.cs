@@ -12,9 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+//builder.Configuration.GetConnectionString("DefaultConnection") - appsettings.json (for first start)
+
 // Настройка подключения к MSSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
@@ -57,4 +60,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 app.Run();

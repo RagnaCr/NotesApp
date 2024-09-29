@@ -33,7 +33,7 @@
                             @(note.Title.Length > 30 ? note.Title.Substring(0, 30) + "..." : note.Title)
                         </a>
                     </td>
-                    <td>@(note.Content.Length > 55 ? note.Content.Substring(0, 55) + "..." : note.Content)</td>
+                    <td>@(note.Content.Length > 50 ? note.Content.Substring(0, 50) + "..." : note.Content)</td>
                     <td>@note.CreatedAt</td>
                     <td>@note.UpdatedAt</td>
                     <td>
@@ -50,8 +50,6 @@
         <input type="file" id="fileUpload" name="file" style="display: none;" accept=".zip,.md" onchange="this.form.submit();" />
     </div>
 </form>
-
-
 
 <script>
     function toggleSelectAll(selectAllCheckbox) {
