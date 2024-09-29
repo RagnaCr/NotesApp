@@ -13,23 +13,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-//builder.Configuration.GetConnectionString("DefaultConnection") - appsettings.json (for first start)
 
-// Настройка подключения к MSSQL
+// Setting up connection to MSSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = true; // Требовать цифры в пароле
-    options.Password.RequiredLength = 6; // Минимальная длина пароля
-    options.Password.RequireLowercase = true; // Требовать строчные буквы
-    options.Password.RequireUppercase = true; // Требовать заглавные буквы
-    options.Password.RequireNonAlphanumeric = false; // НЕ требовать специальные символы
-    options.Lockout.AllowedForNewUsers = true; // Разрешить блокировку для новых пользователей
-    options.Lockout.MaxFailedAccessAttempts = 5; // Максимальное количество неудачных попыток входа
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5); // Время блокировки
-    options.SignIn.RequireConfirmedAccount = true; // Требовать подтверждение аккаунта
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.SignIn.RequireConfirmedAccount = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();

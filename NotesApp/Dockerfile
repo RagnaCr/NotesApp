@@ -1,24 +1,24 @@
-# Используем .NET SDK для сборки приложения
+# Use the .NET SDK to build the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Копируем файлы .csproj и восстанавливаем зависимости
+# Copy the .csproj files and restore the dependencies
 COPY ./NotesApp/*.csproj ./
 RUN dotnet restore
 
-# Копируем все исходные файлы и публикуем проект
+# Copy all source files and publish the project
 COPY ./NotesApp ./
 RUN dotnet publish -c Release -o /app -v diag
 
-# Используем более легкий образ .NET для выполнения приложения
+# Use a lighter .NET image to run the application
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Копируем опубликованные файлы из стадии сборки
+# Copy the published files from the build stage
 COPY --from=build /app .
 
-# Открываем порт 80 для работы приложения в контейнере
+# Open port 80 to run the application in the container
 EXPOSE 80
  
-# Запускаем приложение
+# Run the application
 ENTRYPOINT ["dotnet", "NotesApp.dll"]
